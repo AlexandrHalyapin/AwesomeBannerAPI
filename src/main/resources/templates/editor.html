@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <script th:src="@{/js/jquery-3.6.0.min.js}"></script>
+    <script th:src="@{/js/editorScript.js}"></script>
+    <link th:href="@{css/editorStyle.css}" href="../static/css/editorStyle.css" rel="stylesheet">
+
+
+    <title>AD editor</title>
+</head>
+<body>
+    <div id="general-container">
+        <div id="header-block">
+            <div id="header-block__options">
+                <div id="banner-options" class="categories_common">
+                    <img src="...">
+                    <span> Banners </span>
+                </div>
+                <div id="category-options" class="categories_common">
+                    <img src="...">
+                    <span> Categories </span>
+                </div>
+            </div>
+        </div>
+        <div id="content">
+            <div id="side-menu-block">
+                <div id="side-menu__header">
+                    Banners
+                </div>
+                <div id="side-menu_search-block">
+                    <input id="search-input" placeholder="Enter banner name..." class="input-common">
+                </div>
+                <div id="side-menu-block__items-list">
+                    <span class="one-list-item"> Banner #1 </span>
+                    <span class="one-list-item"> Banner #1 </span>
+                    <span class="one-list-item"> Banner #1 </span>
+                    <span class="one-list-item"> Banner #1 </span>
+                </div>
+                <div id="side-menu-block__create-new">
+                    Create new banner
+                </div>
+            </div>
+
+            <div id="middle-block">
+                <div id="middle-block__header"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
