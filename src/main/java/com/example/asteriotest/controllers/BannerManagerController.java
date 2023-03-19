@@ -27,19 +27,6 @@ public class BannerManagerController {
         this.categoryRepo = categoryRepo;
     }
 
-
-
-
-    // base request
-    @GetMapping("/bannerManager")
-    public String bannerPage(Model model) {
-        System.out.println("YES!");
-
-        model.addAttribute("header", "Создаем баннер!");
-
-        return "editor.html";
-    }
-
     @PostMapping("banners/addBanner")
     public ResponseEntity<String> addBanner(@RequestBody Banner banner) {
         if (bannerRepo.existsByNameBanner(banner.getNameBanner())) { // Check if the banner already exists
@@ -84,16 +71,6 @@ public class BannerManagerController {
         }
     }
 
-    @GetMapping("/justTest")
-    public ResponseEntity<List<Banner>> justTest() {
-
-       List<Banner> banners = bannerRepo.findAllByCategories_name("music").get();
-
-        System.out.println("justTest!");
-
-        return ResponseEntity.ok(banners);
-    }
-
 
     // Banner search request
     @GetMapping("/banners/search")
@@ -111,7 +88,6 @@ public class BannerManagerController {
                 return ResponseEntity.noContent().build();
             }
     }
-
 
 
     //DTO is used. If you use the original banner,

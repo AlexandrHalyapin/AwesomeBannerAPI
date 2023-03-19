@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -54,10 +56,18 @@ public class BannerShowController {
         Comparator<Banner> priceComparator = Comparator.comparing(Banner::getPrice);
         Collections.sort(banners, priceComparator);
 
+        // get request parameters
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
 
         Banner finalBanner = null;
         for (Banner current : banners) {
-            Optional<RequestJournal> journalRecord = journalRepo.findByBannerAndIpAddressAndUserAgent(current, ip, userAgent);
+
+            /*
+            * Search parameters: IP and User-agent are the same as the current one, the record was made within 24 hours
+            * */
+            Optional<RequestJournal> journalRecord = journalRepo.findByBannerAndIpAddressAndUserAgentAndRequestTimeBetween(current, ip, userAgent, startOfDay, endOfDay);
             if (journalRecord.isEmpty()) { // Checking if a banner with these properties has been shown before (if yes, it was logged)
                 System.out.println("now banner" + current.getNameBanner() + " is finalBanner");
                 finalBanner = current; // Choosing a banner
