@@ -99,6 +99,9 @@ public class CategoriesManagerController {
         }
     }
 
+    /**
+     * Search for a category by name. Not case sensitive
+     * */
     @GetMapping("/categories/search")
     public ResponseEntity<List<Category>> searchCategory(@RequestParam String name) {
         if (name == null || name.isBlank()) { //If the parameter is empty, stop execution
@@ -114,19 +117,23 @@ public class CategoriesManagerController {
         }
     }
 
+    /**
+     * Category update method.
+     * The category name and requestID are checked for uniqueness are has not been created before
+     * */
     @PutMapping("/categories/update")
     public ResponseEntity<String> updateCategory(@RequestBody Category category) {
         // If the category name has been changed. we need to check if this name is taken by another category in the database
         Optional<Category> categoryForNameCheck = categoryRepo.findByName(category.getName());
         if (categoryForNameCheck.isPresent()) {
-            if (!categoryForNameCheck.get().getId().equals(category.getId())) { // The banner we are updating has a name taken by another banner
+            if (!categoryForNameCheck.get().getId().equals(category.getId())) { // The category we are updating has a name taken by another category
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this name already exists");
             }
         }
 
         Optional<Category> categoryForRequestIdCheck = categoryRepo.findByRequestId(category.getRequestId());
         if (categoryForRequestIdCheck.isPresent()) {
-            if (!categoryForRequestIdCheck.get().getId().equals(category.getId())) { // The banner we are updating has a name taken by another banner
+            if (!categoryForRequestIdCheck.get().getId().equals(category.getId())) { // The category we are updating has a requestId taken by another category
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this requestId already exists");
             }
         }

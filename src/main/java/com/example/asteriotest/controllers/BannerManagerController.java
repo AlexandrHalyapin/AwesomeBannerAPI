@@ -26,7 +26,10 @@ public class BannerManagerController {
         this.bannerRepo = bannerRepo;
         this.categoryRepo = categoryRepo;
     }
-
+    /**
+     * The method of adding a banner, a banner can only be added if a banner with the same name has not been created before.
+     * Categories to be attached to the banner must be created.
+     * */
     @PostMapping("banners/addBanner")
     public ResponseEntity<String> addBanner(@RequestBody Banner banner) {
         if (bannerRepo.existsByNameBanner(banner.getNameBanner())) { // Check if the banner already exists
@@ -46,7 +49,10 @@ public class BannerManagerController {
         System.out.println("Banner has been created");
         return ResponseEntity.ok("Banner has been created with properties: " + banner.toString());
     }
-
+    /**
+     *  the function of "logical" deletion. To comply with the uniqueness of records,
+     *  the time when the record was deleted is added to the properties of the deleted record
+     * */
     @DeleteMapping("banners/delete/{id}")
     public ResponseEntity<String> deleteBanner(@PathVariable Long id) {
         Optional<Banner> toDelete = bannerRepo.findById(id);
@@ -72,7 +78,10 @@ public class BannerManagerController {
     }
 
 
-    // Banner search request
+    /**
+     *  Banner search request.
+     *  The method is not case sensitive.
+     */
     @GetMapping("/banners/search")
     public ResponseEntity<List<Banner>> searchBanner(@RequestParam String name) {
             if (name == null || name.isBlank()) { //If the parameter is empty, stop execution
@@ -92,6 +101,15 @@ public class BannerManagerController {
 
     //DTO is used. If you use the original banner,
     // the category properties can be changed along with it (via JSON), this is not safe
+    /**
+     * Banner update method.
+     * If the banner name has been changed,
+     * a check is made to make sure that the banner with the same name has not been created before
+     * Banner update method. If the banner name has been changed,
+     * a check is made to make sure that the banner with the same name has not been created before
+     * The Data Transfer Object is used, because if you pass a JSON analog of the Banner instance,
+     * the Banner update request will allow you to unauthorized edit categories.
+     * */
     @PutMapping("/banners/update")
     public ResponseEntity<String> updateBanner(@RequestBody BannerDTO bannerDTO) {
         Banner banner = bannerDTO.getBanner();
@@ -103,7 +121,6 @@ public class BannerManagerController {
                return ResponseEntity.status(HttpStatus.CONFLICT).body("Banner with this name already exists");
            }
        }
-
 
         if (bannerRepo.existsById(banner.getId())) { // check if the banner exists
             Set<Long> categoriesId = bannerDTO.getCategoriesId();
