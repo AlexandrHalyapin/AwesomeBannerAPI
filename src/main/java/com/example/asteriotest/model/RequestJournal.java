@@ -24,8 +24,6 @@ public class RequestJournal {
     @ManyToOne
     public Banner banner;
 
-//    @OneToMany
-//    public Set<Category> categories;
     @Column
     private double bannerPrice;
     @Column
@@ -36,7 +34,7 @@ public class RequestJournal {
         this.userAgent = userAgent;
         this.requestTime = requestTime;
         this.banner = banner;
-//        this.categories = banner.getCategories();
+
         this.bannerPrice = bannerPrice;
     }
 
@@ -74,14 +72,6 @@ public class RequestJournal {
     public void setBanner(Banner banner) {
         this.banner = banner;
     }
-
-//    public Set<Category> getCategories() {
-//        return categories;
-//    }
-//
-//    public void setCategories(Set<Category> categories) {
-//        this.categories = categories;
-//    }
 
     public double getBannerPrice() {
         return bannerPrice;

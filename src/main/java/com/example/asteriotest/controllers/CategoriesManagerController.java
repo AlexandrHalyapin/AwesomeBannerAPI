@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -114,6 +113,7 @@ public class CategoriesManagerController {
             return ResponseEntity.noContent().build();
         }
     }
+
     @PutMapping("/categories/update")
     public ResponseEntity<String> updateCategory(@RequestBody Category category) {
         // If the category name has been changed. we need to check if this name is taken by another category in the database
@@ -130,8 +130,6 @@ public class CategoriesManagerController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this requestId already exists");
             }
         }
-
-
 
         if (categoryRepo.existsById(category.getId())) {
             categoryRepo.save(category);

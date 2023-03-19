@@ -88,10 +88,6 @@ public class BannerShowController {
         }
 
 
-//        Optional<Banner> optBanners = bannerRepo.findFirstByCategories_requestIdInOrderByPriceDesc(categories);
-//        Banner banner = optBanners.get();
-
-
             RequestJournal log = new RequestJournal(ip, userAgent,
                     LocalDateTime.now(), finalBanner,
                     finalBanner.getPrice());
