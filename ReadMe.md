@@ -11,7 +11,9 @@ The priority property of the banner is the price, the most expensive banners are
 
 To install the application on a working machine, you need a MySQL database, 
 the parameters for connecting to the database are described in the file application.propeties in the project folder.
-You can deploy the project using your preferred IDE with the .jar file packaging feature, or by using Apache Maven to create a .jar file.
+You can deploy the project using your preferred IDE with the .jar file packaging feature, or by using Apache Maven to create a .jar file. \
+Note that the application uses **Java 17**
+
 
 Only /bid address is open, to work with the rest of the API requires authorization.
 
