@@ -1,16 +1,17 @@
 package com.example.asteriotest.controllers;
 
-import com.example.asteriotest.model.Banner;
+import com.example.asteriotest.exception.categoriesExceptions.CategoryAlreadyExistsException;
+import com.example.asteriotest.exception.categoriesExceptions.CategoryNotFoundException;
+import com.example.asteriotest.exception.categoriesExceptions.DependentСategoryException;
 import com.example.asteriotest.model.Category;
 import com.example.asteriotest.repository.BannerRepository;
 import com.example.asteriotest.repository.CategoriesRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.asteriotest.services.CategoryManagerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,83 +20,34 @@ public class CategoriesManagerController {
 
     private CategoriesRepository categoryRepo;
     private BannerRepository bannerRepo;
+    private CategoryManagerService categoryManagerService;
 
-    @Autowired
-    public CategoriesManagerController(CategoriesRepository categoryRepo, BannerRepository bannerRepo) {
+    public CategoriesManagerController(CategoriesRepository categoryRepo, BannerRepository bannerRepo, CategoryManagerService categoryManagerService) {
         this.categoryRepo = categoryRepo;
         this.bannerRepo = bannerRepo;
+        this.categoryManagerService = categoryManagerService;
     }
 
 
-
-    /**
-    * Adding a new category. The method accepts a category parameter using the RequestBody,
-    * if one of the properties of the passed category is not unique, execution stops
-    * */
     @PostMapping("categories/addCategories")
     public ResponseEntity<String> addCategory(@RequestBody Category category) {
-        if (categoryRepo.existsByName(category.getName())) { // Check that this category has not been created before (name)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this name already exist");
+        try {
+            categoryManagerService.addCategory(category);
+        } catch (CategoryAlreadyExistsException exc) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(exc.getMessage());
         }
-        if (categoryRepo.existsByRequestId(category.getRequestId())) { // Check that this category has not been created before (requestId)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this requestId already exist");
-        }
-
-        categoryRepo.save(category); // if the new category is unique, save it
-
         return ResponseEntity.status(HttpStatus.OK).body("Category has been created with properties: " + category.toString());
     }
 
-    /**
-     * The method of removing categories.
-     * A category can only be deleted if there are no dependent banners,
-     * if there are dependent banners,
-     * the category can ONLY be deleted if the request contains the parameter "cascadeRemove=true".
-     * */
+
     @DeleteMapping("/categories/delete/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id, @RequestParam Boolean cascadeRemove) {
-        Optional<Category> toDelete = categoryRepo.findById(id);
-        if (toDelete.isPresent()) { // check if the category exists
-            Category category = toDelete.get();
-
-
-            /*
-            * If cascadeRemove = true is selected,
-            * then we remove the category and all associated banners.
-            */
-            String response = "Category " + category.getName() + " has been deleted";
-            if (cascadeRemove) {
-               Optional<List<Banner>> bannersToDelete = bannerRepo.findAllByCategories_name(toDelete.get().getName());
-                if (bannersToDelete.get().size() > 0) {
-                    for (Banner banner : bannersToDelete.get()) {
-                        banner.setDeleted(true);
-                        banner.setNameBanner(banner.getNameBanner() + " # Deleted: " + new Date());
-                        bannerRepo.save(banner);
-                    }
-                    response +=", removed all related banners along with it";
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("The category cannot be deleted because other banners depend on it. Set \"true\" for the \"cascadeRemode\" parameter to remove all related banners.");
-            }
-
-            /*
-            * If we delete a record logically, it is no longer considered in queries,
-            * while it is important for us to maintain uniqueness of new record names,
-            * we get a conflict: uniqueness check in controller does not know about records "deleted = false"
-            * and allows to save record, and then we get "duplicate" error.
-            * In this case, deleting changes the names of deleted records,
-            * this will avoid the "duplicate" error in the future.
-            * */
-
-            category.setDeleted(true);
-            category.setName(category.getName() + " # Deleted: " + new Date());
-            category.setRequestId(category.getRequestId() + " # Deleted: " + new Date());
-
-
-            categoryRepo.save(category);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Removed category does not exist");
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(categoryManagerService.deleteCategory(id, cascadeRemove));  // in case if all is well
+        } catch (DependentСategoryException exc) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(exc.getMessage()); // in case if category depend from other
+        } catch (CategoryNotFoundException exc) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exc.getMessage()); // in case if this category does not exist
         }
     }
 
@@ -103,16 +55,10 @@ public class CategoriesManagerController {
      * Search for a category by name. Not case sensitive
      * */
     @GetMapping("/categories/search")
-    public ResponseEntity<List<Category>> searchCategory(@RequestParam String name) {
-        if (name == null || name.isBlank()) { //If the parameter is empty, stop execution
-            return ResponseEntity.noContent().build();
-        }
-
-        name = name.toLowerCase();
-        Optional<List<Category>> categories = categoryRepo.findAllByNameContains(name);
-        if (categories.get().size() > 0) {
-            return ResponseEntity.ok(categories.get());
-        } else {
+    public ResponseEntity<List<Category>> searchCategory(@RequestParam String name) throws IllegalArgumentException {
+        try {
+            return ResponseEntity.ok(categoryManagerService.searchCategory(name));
+        } catch (IllegalArgumentException exc) {
             return ResponseEntity.noContent().build();
         }
     }
