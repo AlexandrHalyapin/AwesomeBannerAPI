@@ -1,4 +1,4 @@
-# AsterioTest
+# Simple AD demo app
 This is a simple test API to demonstrate java-backend development skills. 
 This application allows you to create, edit, delete, read text AD banners. 
 
