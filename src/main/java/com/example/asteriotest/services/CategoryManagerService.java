@@ -15,11 +15,13 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 @Service
 public class CategoryManagerService {
     private final CategoriesRepository categoriesRepo;
     private final BannerRepository bannerRepo;
+    private final Logger logger = Logger.getLogger(BannerManagerService.class.getName());
 
     @Autowired
     public CategoryManagerService(CategoriesRepository categoriesRepo, BannerRepository bannerRepo) {
@@ -136,10 +138,10 @@ public class CategoryManagerService {
 
         if (categoriesRepo.existsById(category.getId())) {
             categoriesRepo.save(category);
-            System.out.println("Category has been edited");
+            logger.info("Category has been edited");
             return "Category has been edited";
         } else {
-            System.out.println("Category with this ID not found");
+            logger.info("Category with this ID not found");
             throw new CategoryNotFoundException("Category with this ID not found");
         }
 

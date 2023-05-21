@@ -20,12 +20,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Service
 public class BannerManagerService {
     private final CategoriesRepository categoriesRepo;
     private final BannerRepository bannerRepo;
     private final RequestJournalRepository journalRepo;
+
+    private final Logger logger = Logger.getLogger(BannerManagerService.class.getName());
 
     public BannerManagerService(CategoriesRepository categoriesRepo, BannerRepository bannerRepo, RequestJournalRepository journalRepo) {
         this.categoriesRepo = categoriesRepo;
@@ -39,20 +42,20 @@ public class BannerManagerService {
      * */
     public String addBanner(Banner banner) {
         if (bannerRepo.existsByNameBanner(banner.getNameBanner())) { // Check if the banner already exists
-            System.out.println("Banner with this name already exists");
+            logger.info("Banner with this name already exists");
             throw new BannerAlreadyExistsException("ERROR 409: Banner with this name already exists");
         }
 
         Set<Category> categories = new HashSet<>(banner.getCategories());
         for (Category category : categories) {
             if (!categoriesRepo.existsById(category.getId())) {
-                System.out.println("One of the categories does not exist");
+                logger.info("One of the categories does not exist");
                 throw new InsertedCategoryDoesNotExist("ERROR 404: The category inserted into the banner does not exist");
             }
         }
 
         bannerRepo.save(banner);
-        System.out.println("Banner has been created");
+        logger.info("Banner has been created");
         return "Banner has been created with properties: " + banner.toString();
     }
 
@@ -137,10 +140,10 @@ public class BannerManagerService {
                 }
             }
             bannerRepo.save(banner);
-            System.out.println("Banner has been edited");
+            logger.info("Banner has been edited");
             return "Banner has been edited";
         } else {
-            System.out.println("Banner with this ID not found");
+            logger.info("Banner with this ID not found");
             throw new BannerNotFoundException("Banner with this ID not found");
         }
     }
@@ -181,7 +184,7 @@ public class BannerManagerService {
                  * */
                 Optional<RequestJournal> journalRecord = journalRepo.findByBannerAndIpAddressAndUserAgentAndRequestTimeBetween(current, ip, userAgent, startOfDay, endOfDay);
                 if (journalRecord.isEmpty()) { // Checking if a banner with these properties has been shown before (if yes, it was logged)
-                    System.out.println("now banner" + current.getNameBanner() + " is finalBanner");
+                    logger.info("now banner" + current.getNameBanner() + " is finalBanner");
                     finalBanner = current; // Choosing a banner
                 }
             }
@@ -189,7 +192,7 @@ public class BannerManagerService {
             // If there is no matching banner, returns error 204
             if (finalBanner == null) {
                 String errorBanner = "ERROR 204: This banner has already been shown to this user before";
-                System.out.println(errorBanner);
+                logger.info(errorBanner);
 
                 RequestJournal log = new RequestJournal(ip, userAgent,
                         LocalDateTime.now(), errorBanner);
@@ -209,7 +212,7 @@ public class BannerManagerService {
             return finalBanner.getText();
         } else {
             String errorBody = "ERROR 204: banner with this category not found";
-            System.out.println(errorBody);
+            logger.info(errorBody);
 
             RequestJournal log = new RequestJournal(ip, userAgent,
                     LocalDateTime.now(), errorBody);
