@@ -51,46 +51,27 @@ public class CategoriesManagerController {
         }
     }
 
-    /**
-     * Search for a category by name. Not case sensitive
-     * */
+
     @GetMapping("/categories/search")
     public ResponseEntity<List<Category>> searchCategory(@RequestParam String name) throws IllegalArgumentException {
         try {
             return ResponseEntity.ok(categoryManagerService.searchCategory(name));
         } catch (IllegalArgumentException exc) {
             return ResponseEntity.noContent().build();
+        } catch (CategoryNotFoundException exc) {
+            return ResponseEntity.noContent().build();
         }
     }
 
-    /**
-     * Category update method.
-     * The category name and requestID are checked for uniqueness are has not been created before
-     * */
+
     @PutMapping("/categories/update")
     public ResponseEntity<String> updateCategory(@RequestBody Category category) {
-        // If the category name has been changed. we need to check if this name is taken by another category in the database
-        Optional<Category> categoryForNameCheck = categoryRepo.findByName(category.getName());
-        if (categoryForNameCheck.isPresent()) {
-            if (!categoryForNameCheck.get().getId().equals(category.getId())) { // The category we are updating has a name taken by another category
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this name already exists");
-            }
-        }
-
-        Optional<Category> categoryForRequestIdCheck = categoryRepo.findByRequestId(category.getRequestId());
-        if (categoryForRequestIdCheck.isPresent()) {
-            if (!categoryForRequestIdCheck.get().getId().equals(category.getId())) { // The category we are updating has a requestId taken by another category
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Category with this requestId already exists");
-            }
-        }
-
-        if (categoryRepo.existsById(category.getId())) {
-            categoryRepo.save(category);
-            System.out.println("Category has been edited");
-            return ResponseEntity.status(HttpStatus.OK).body("Category has been edited");
-        } else {
-            System.out.println("Category with this ID not found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category with this ID not found");
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(categoryManagerService.updateCategory(category));
+        } catch (CategoryAlreadyExistsException exc) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(exc.getMessage());
+        } catch (CategoryNotFoundException exc) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exc.getMessage());
         }
     }
 

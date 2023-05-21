@@ -1,11 +1,14 @@
 package com.example.asteriotest.controllers;
 
+import com.example.asteriotest.exception.bannerExceptions.BannerAlreadyShownException;
+import com.example.asteriotest.exception.bannerExceptions.BannerNotFoundException;
 import com.example.asteriotest.model.Banner;
 import com.example.asteriotest.model.Category;
 import com.example.asteriotest.model.RequestJournal;
 import com.example.asteriotest.repository.BannerRepository;
 import com.example.asteriotest.repository.CategoriesRepository;
 import com.example.asteriotest.repository.RequestJournalRepository;
+import com.example.asteriotest.services.BannerManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +27,13 @@ public class BannerShowController {
     BannerRepository bannerRepo;
     CategoriesRepository categoryRepo;
     RequestJournalRepository journalRepo;
+    BannerManagerService bannerManagerService;
 
-    @Autowired
-    public BannerShowController(BannerRepository bannerRepo, CategoriesRepository categoryRepo, RequestJournalRepository journalRepo) {
+    public BannerShowController(BannerRepository bannerRepo, CategoriesRepository categoryRepo, RequestJournalRepository journalRepo, BannerManagerService bannerManagerService) {
         this.bannerRepo = bannerRepo;
         this.categoryRepo = categoryRepo;
         this.journalRepo = journalRepo;
+        this.bannerManagerService = bannerManagerService;
     }
 
     /**
@@ -43,68 +47,12 @@ public class BannerShowController {
      * */
     @GetMapping("/bid")
     public ResponseEntity<String> bid(HttpServletRequest servletRequest, @RequestParam("cat") List<String> categories) {
-
-
-        Optional<List<Banner>> optionalBanners = bannerRepo.findAllByCategories_requestIdIn(categories); // Looking for banners by category
-        String userAgent = servletRequest.getHeader("User-Agent");
-        String ip = servletRequest.getRemoteAddr();
-
-        if (optionalBanners.get().size() > 0) { // Check if there is at least one banner
-
-        //sort banners by price
-        List<Banner> banners = optionalBanners.get();
-        Comparator<Banner> priceComparator = Comparator.comparing(Banner::getPrice);
-        Collections.sort(banners, priceComparator);
-
-        // get request parameters
-        LocalDate today = LocalDate.now();
-        LocalDateTime startOfDay = today.atStartOfDay();
-        LocalDateTime endOfDay = today.atTime(23, 59, 59);
-
-        Banner finalBanner = null;
-        for (Banner current : banners) {
-
-            /*
-            * Search parameters: IP and User-agent are the same as the current one, the record was made within 24 hours
-            * */
-            Optional<RequestJournal> journalRecord = journalRepo.findByBannerAndIpAddressAndUserAgentAndRequestTimeBetween(current, ip, userAgent, startOfDay, endOfDay);
-            if (journalRecord.isEmpty()) { // Checking if a banner with these properties has been shown before (if yes, it was logged)
-                System.out.println("now banner" + current.getNameBanner() + " is finalBanner");
-                finalBanner = current; // Choosing a banner
-            }
-        }
-
-        // If there is no matching banner, returns error 204
-        if (finalBanner == null) {
-            String errorBanner = "ERROR 204: This banner has already been shown to this user before";
-            System.out.println(errorBanner);
-
-            RequestJournal log = new RequestJournal(ip, userAgent,
-                    LocalDateTime.now(), errorBanner);
-
-            journalRepo.save(log);
-
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("ERROR 204: This banner has already been shown to this user before");
-        }
-
-
-            RequestJournal log = new RequestJournal(ip, userAgent,
-                    LocalDateTime.now(), finalBanner,
-                    finalBanner.getPrice());
-
-            journalRepo.save(log);
-
-            return ResponseEntity.ok(finalBanner.getText());
-        } else {
-            String errorBody = "ERROR 204: banner with this category not found";
-            System.out.println(errorBody);
-
-            RequestJournal log = new RequestJournal(ip, userAgent,
-                    LocalDateTime.now(), errorBody);
-
-            journalRepo.save(log);
-
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(errorBody);
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(bannerManagerService.bid(servletRequest, categories));
+        } catch (BannerAlreadyShownException exc) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(exc.getMessage());
+        } catch (BannerNotFoundException exc) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(exc.getMessage());
         }
     }
 }

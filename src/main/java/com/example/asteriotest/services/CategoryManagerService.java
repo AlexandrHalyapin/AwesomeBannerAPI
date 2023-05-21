@@ -8,6 +8,8 @@ import com.example.asteriotest.model.Category;
 import com.example.asteriotest.repository.BannerRepository;
 import com.example.asteriotest.repository.CategoriesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -16,8 +18,8 @@ import java.util.Optional;
 
 @Service
 public class CategoryManagerService {
-    private CategoriesRepository categoriesRepo;
-    private BannerRepository bannerRepo;
+    private final CategoriesRepository categoriesRepo;
+    private final BannerRepository bannerRepo;
 
     @Autowired
     public CategoryManagerService(CategoriesRepository categoriesRepo, BannerRepository bannerRepo) {
@@ -93,16 +95,18 @@ public class CategoryManagerService {
         }
     }
 
+    /**
+     * Search for a category by name. Not case sensitive
+     * */
     public List<Category> searchCategory(String name) throws IllegalArgumentException {
         if (name == null || name.isBlank()) { // If the parameter is empty, stop execution
             throw new IllegalArgumentException("Category name cannot be empty");
         }
 
-
         name = name.toLowerCase();
         Optional<List<Category>> categories = categoriesRepo.findAllByNameContains(name);
 
-        if (categories.isPresent()) {
+        if (categories.isEmpty()) {
             throw new CategoryNotFoundException("Category with this name does not exist");
         }
 
@@ -110,5 +114,35 @@ public class CategoryManagerService {
 
     }
 
+    /**
+     * Category update method.
+     * The category name and requestID are checked for uniqueness are has not been created before
+     * */
+    public String updateCategory(Category category) {
+        // If the category name has been changed. we need to check if this name is taken by another category in the database
+        Optional<Category> categoryForNameCheck = categoriesRepo.findByName(category.getName());
+        if (categoryForNameCheck.isPresent()) {
+            if (!categoryForNameCheck.get().getId().equals(category.getId())) { // The category we are updating has a name taken by another category
+                throw new CategoryAlreadyExistsException("Category with this name already exists");
+            }
+        }
+
+        Optional<Category> categoryForRequestIdCheck = categoriesRepo.findByRequestId(category.getRequestId());
+        if (categoryForRequestIdCheck.isPresent()) {
+            if (!categoryForRequestIdCheck.get().getId().equals(category.getId())) { // The category we are updating has a requestId taken by another category
+                throw new CategoryAlreadyExistsException("Category with this requestId already exists");
+            }
+        }
+
+        if (categoriesRepo.existsById(category.getId())) {
+            categoriesRepo.save(category);
+            System.out.println("Category has been edited");
+            return "Category has been edited";
+        } else {
+            System.out.println("Category with this ID not found");
+            throw new CategoryNotFoundException("Category with this ID not found");
+        }
+
+    }
 
 }
